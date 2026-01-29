@@ -97,6 +97,8 @@ services:
     image: portainer/portainer-ce:latest
     container_name: portainer
     restart: unless-stopped
+    command:
+      - "--base-url=/portainer"
     ports:
       - 9000:9000
     volumes:
