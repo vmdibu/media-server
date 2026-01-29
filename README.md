@@ -30,22 +30,22 @@ docker compose ps
 
 ## Ports and URLs
 
-The table below lists direct ports and optional nginx path proxies. The nginx
-path URLs work when you include the templates under `configs/_templates/nginx/conf.d`
-in your nginx `server` block.
+The table below lists direct ports and optional nginx path proxies. When
+`configs/_templates/nginx/conf.d` exists, the installer copies templates into
+`$CONFIG_ROOT/nginx/conf.d`, so path routing works immediately.
 
-Minimal example (HTTP only):
+Example URLs (HTTP only):
+- http://SERVER_IP/radarr
+- http://SERVER_IP/sonarr
+- http://SERVER_IP/qbit
+- http://SERVER_IP/bazarr
+- http://SERVER_IP/ombi
+- http://SERVER_IP/portainer
+- http://SERVER_IP/jackett
+- http://SERVER_IP/plex
 
-```nginx
-server {
-  listen 80;
-  server_name _;
-  include /etc/nginx/conf.d/*.conf;
-}
-```
-
-The templates proxy by path (for example `/radarr`, `/sonarr`, `/qbit`, etc.).
-DNS is optional; accessing by IP works.
+Plex uses `/plex` via host loopback (`127.0.0.1:32400`) because it runs in host
+network mode.
 
 | Service     | Default port | Example URL                    | Nginx path |
 |-------------|--------------|--------------------------------|------------|
