@@ -1,44 +1,13 @@
-# Runtime Folder Contract (CONFIG_ROOT)
+# Media Server Stack
 
-This document defines the canonical directory structure that must exist under
-`CONFIG_ROOT` for the media server stack to run. These folders are created by
-the install script and are never overwritten.
-
-## Quick start
-
-1) Clone the repo:
-
-```bash
-git clone <repo-url>
-cd media-server
-```
-
-2) Create your environment file:
-
-```bash
-cp .env.example .env
-```
-
-3) Edit `.env` variables to match your host paths and user IDs.
-
-4) Run the installer:
-
-```bash
-./scripts/install.sh
-```
-
-5) Check status:
-
-```bash
-docker compose ps
-```
+Docker Compose stack for Plex, *arr apps, qBittorrent, Ombi, Nginx, and supporting services. Uses `.env` for host paths and IDs, and an installer to create required folders.
 
 ## Prereqs
 
 - Docker installed and running
 - Docker Compose plugin available (`docker compose`)
 
-## Setup
+## Quick start
 
 ```bash
 git clone <repo-url>
@@ -46,6 +15,7 @@ cd media-server
 cp .env.example .env
 # Edit .env to match your paths and user IDs
 ./scripts/install.sh
+docker compose ps
 ```
 
 ## Troubleshooting
@@ -57,29 +27,6 @@ cp .env.example .env
 - Permissions (PUID/PGID): containers write as the user/group you set in `.env`.
   - `id -u` / `id -g`
   - `sudo chown -R $PUID:$PGID $CONFIG_ROOT`
-
-## Required folders and permissions
-
-All containers use `PUID`/`PGID` from `.env` to map file ownership on the host.
-Set these to your user ID and group ID:
-
-```bash
-id -u
-id -g
-```
-
-Ensure the config directory is owned by that user/group:
-
-```bash
-sudo chown -R $PUID:$PGID $CONFIG_ROOT
-```
-
-`MEDIA_ROOT` must be a mounted filesystem, not an empty folder. Verify it:
-
-```bash
-mount | grep "$MEDIA_ROOT"
-ls -la "$MEDIA_ROOT"
-```
 
 ## Ports and URLs
 
@@ -104,30 +51,18 @@ DNS is optional; accessing by IP works.
 |-------------|--------------|--------------------------------|------------|
 | Plex        | 32400        | http://localhost:32400/web     | /plex      |
 | qBittorrent | 8080         | http://localhost:8080          | /qbit      |
-| Jackett     | 9117         | http://localhost:9117          | —          |
+| Jackett     | 9117         | http://localhost:9117          | N/A        |
 | Radarr      | 7878         | http://localhost:7878          | /radarr    |
 | Sonarr      | 8989         | http://localhost:8989          | /sonarr    |
 | Bazarr      | 6767         | http://localhost:6767          | /bazarr    |
 | Ombi        | 3579         | http://localhost:3579          | /ombi      |
 | Portainer   | 9000         | http://localhost:9000          | /portainer |
-| Nginx       | 80/443       | http://localhost               | —          |
+| Nginx       | 80/443       | http://localhost               | N/A        |
 
-## Security notes
+## Runtime folder contract (CONFIG_ROOT)
 
-- Mounting `/var/run/docker.sock` (Portainer/Watchtower) grants admin control of Docker; keep access restricted.
-- Plex uses host networking, which reduces container isolation; avoid exposing it beyond your LAN.
-- Prefer firewall rules or LAN-only access for all service ports.
-
-## Watchtower note
-
-Watchtower automatically updates running containers. This is convenient, but it can introduce unexpected changes; you may want to disable it for stability.
-
-Ways to disable it:
-- Comment out the `watchtower` service in `compose.yml`
-- Set `WATCHTOWER_*` variables to limit or disable updates
-- Stop the container with `docker compose stop watchtower`
-
-## Folder tree
+The installer creates the canonical directory structure under `CONFIG_ROOT` and
+never overwrites existing files or directories.
 
 ```
 CONFIG_ROOT/
@@ -157,3 +92,18 @@ CONFIG_ROOT/
 - `qBittorrent/`: persistent configuration and app data for qBittorrent.
 - `radarr/`: persistent configuration and app data for Radarr.
 - `sonarr/`: persistent configuration and app data for Sonarr.
+
+## Security notes
+
+- Mounting `/var/run/docker.sock` (Portainer/Watchtower) grants admin control of Docker; keep access restricted.
+- Plex uses host networking, which reduces container isolation; avoid exposing it beyond your LAN.
+- Prefer firewall rules or LAN-only access for all service ports.
+
+## Watchtower note
+
+Watchtower automatically updates running containers. This is convenient, but it can introduce unexpected changes; you may want to disable it for stability.
+
+Ways to disable it:
+- Comment out the `watchtower` service in `compose.yml`
+- Set `WATCHTOWER_*` variables to limit or disable updates
+- Stop the container with `docker compose stop watchtower`
