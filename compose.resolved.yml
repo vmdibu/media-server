@@ -1,0 +1,274 @@
+name: media-server
+services:
+  bazarr:
+    container_name: bazarr
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      TZ: Europe/Bucharest
+    image: linuxserver/bazarr
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 6767
+        published: "6767"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/bazarr
+        target: /config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/Plex Movies
+        target: /movies
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/Plex Series
+        target: /tv
+        bind:
+          create_host_path: true
+  jackett:
+    container_name: jackett
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      TZ: Europe/Bucharest
+    image: lscr.io/linuxserver/jackett:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 9117
+        published: "9117"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/jackett
+        target: /config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/downloads
+        target: /downloads
+        bind:
+          create_host_path: true
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 80
+        published: "80"
+        protocol: tcp
+      - mode: ingress
+        target: 443
+        published: "443"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/nginx/conf.d
+        target: /etc/nginx/conf.d
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /opt/media-configs/nginx/certs
+        target: /certs
+        read_only: true
+        bind:
+          create_host_path: true
+  ombi:
+    container_name: ombi
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      TZ: Europe/Bucharest
+    image: lscr.io/linuxserver/ombi:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 3579
+        published: "3579"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/ombi
+        target: /config
+        bind:
+          create_host_path: true
+  plex:
+    container_name: plex
+    devices:
+      - source: /dev/dri
+        target: /dev/dri
+        permissions: rwm
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      VERSION: docker
+    image: lscr.io/linuxserver/plex:latest
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/plex
+        target: /config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/Plex Movies
+        target: /movies
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/Plex Series
+        target: /tv
+        bind:
+          create_host_path: true
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 9000
+        published: "9000"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /opt/media-configs/portainer
+        target: /data
+        bind:
+          create_host_path: true
+  qbittorrent:
+    container_name: qbittorrent
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      TZ: Europe/Bucharest
+      WEBUI_PORT: "8080"
+    image: lscr.io/linuxserver/qbittorrent:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+      - mode: ingress
+        target: 6881
+        published: "6881"
+        protocol: tcp
+      - mode: ingress
+        target: 6881
+        published: "6881"
+        protocol: udp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/qBittorrent
+        target: /config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/downloads
+        target: /downloads
+        bind:
+          create_host_path: true
+  radarr:
+    container_name: radarr
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      TZ: Europe/Bucharest
+    image: lscr.io/linuxserver/radarr:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 7878
+        published: "7878"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/radarr
+        target: /config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/Plex Movies
+        target: /movies
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/downloads
+        target: /downloads
+        bind:
+          create_host_path: true
+  sonarr:
+    container_name: sonarr
+    environment:
+      PGID: "1000"
+      PUID: "1000"
+      TZ: Europe/Bucharest
+    image: lscr.io/linuxserver/sonarr:latest
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 8989
+        published: "8989"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /opt/media-configs/sonarr
+        target: /config
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/Plex Series
+        target: /tv
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/plexdrive/NetworkDrive/downloads
+        target: /downloads
+        bind:
+          create_host_path: true
+  watchtower:
+    container_name: watchtower
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_POLL_INTERVAL: "21600"
+    image: containrrr/watchtower
+    networks:
+      default: null
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        bind:
+          create_host_path: true
+networks:
+  default:
+    name: media-server_default
