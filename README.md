@@ -32,7 +32,8 @@ docker compose ps
 
 The table below lists direct ports and optional nginx path proxies. When
 `configs/_templates/nginx/conf.d` exists, the installer copies templates into
-`$CONFIG_ROOT/nginx/conf.d`, so path routing works immediately.
+`$CONFIG_ROOT/nginx/conf.d`, so path routing works immediately. After the first
+install, edit the live configs under `$CONFIG_ROOT/nginx/conf.d`.
 
 Example URLs (HTTP only):
 - http://SERVER_IP/radarr
