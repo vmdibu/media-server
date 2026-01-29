@@ -93,6 +93,15 @@ DNS is optional; accessing by IP works.
 - Plex uses host networking, which reduces container isolation; avoid exposing it beyond your LAN.
 - Prefer firewall rules or LAN-only access for all service ports.
 
+## Watchtower note
+
+Watchtower automatically updates running containers. This is convenient, but it can introduce unexpected changes; you may want to disable it for stability.
+
+Ways to disable it:
+- Comment out the `watchtower` service in `compose.yml`
+- Set `WATCHTOWER_*` variables to limit or disable updates
+- Stop the container with `docker compose stop watchtower`
+
 ## Folder tree
 
 ```
