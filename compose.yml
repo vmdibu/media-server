@@ -135,6 +135,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ${CONFIG_ROOT}/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${CONFIG_ROOT}/nginx/html:/usr/share/nginx/html:ro
       - ${CONFIG_ROOT}/nginx/certs:/certs:ro
     ports:
       - "80:80"

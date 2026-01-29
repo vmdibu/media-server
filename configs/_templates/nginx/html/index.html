@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Media Server</title>
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --panel: #111823;
+        --panel-2: #0f141d;
+        --text: #e8edf4;
+        --muted: #a8b4c3;
+        --ring: rgba(255,255,255,0.16);
+        --shadow: 0 18px 40px rgba(0,0,0,0.35);
+        --radius: 18px;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(1200px 600px at 10% -10%, #1a2435 0%, rgba(26,36,53,0) 60%),
+          radial-gradient(900px 500px at 90% 10%, #20283b 0%, rgba(32,40,59,0) 55%),
+          linear-gradient(180deg, #0b0f14 0%, #0b0f14 100%);
+        color: var(--text);
+        font-family: "Space Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.2px;
+      }
+
+      .wrap {
+        min-height: 100%;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 28px;
+        padding: 40px 28px 28px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .title {
+        display: grid;
+        gap: 6px;
+      }
+
+      .title h1 {
+        margin: 0;
+        font-size: 34px;
+        font-weight: 600;
+      }
+
+      .title p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .status {
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid var(--ring);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .tile {
+        position: relative;
+        display: grid;
+        gap: 8px;
+        padding: 22px;
+        border-radius: var(--radius);
+        color: inherit;
+        text-decoration: none;
+        background:
+          radial-gradient(220px 120px at 15% 20%, rgba(255,255,255,0.2), rgba(255,255,255,0) 70%),
+          linear-gradient(135deg, var(--a) 0%, var(--b) 100%);
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(255,255,255,0.06);
+        overflow: hidden;
+        min-height: 140px;
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+      }
+
+      .tile::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0) 45%);
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .tile:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255,255,255,0.2);
+        box-shadow: 0 24px 48px rgba(0,0,0,0.45);
+      }
+
+      .tile .name {
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .tile .desc {
+        font-size: 13px;
+        color: rgba(255,255,255,0.8);
+      }
+
+      .chip {
+        justify-self: start;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(0,0,0,0.28);
+        border: 1px solid rgba(255,255,255,0.2);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      @media (max-width: 640px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .title h1 {
+          font-size: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="title">
+          <h1>Media Server</h1>
+          <p>Pick a service to launch. Everything lives behind this box.</p>
+        </div>
+        <div class="status">Local • 192.168.68.50</div>
+      </header>
+
+      <main class="grid">
+        <a class="tile" href="/plex/" style="--a:#ffb347;--b:#ff6f4f;">
+          <div class="chip">Plex</div>
+          <div class="name">Plex</div>
+          <div class="desc">Watch and organize your library.</div>
+        </a>
+
+        <a class="tile" href="/qbit/" style="--a:#4f8cff;--b:#3b5dff;">
+          <div class="chip">qBittorrent</div>
+          <div class="name">qBittorrent</div>
+          <div class="desc">Downloads and queue control.</div>
+        </a>
+
+        <a class="tile" href="/jackett/" style="--a:#00c6a7;--b:#1b7f6a;">
+          <div class="chip">Jackett</div>
+          <div class="name">Jackett</div>
+          <div class="desc">Indexer search and feeds.</div>
+        </a>
+
+        <a class="tile" href="/radarr/" style="--a:#ff6b6b;--b:#c73866;">
+          <div class="chip">Radarr</div>
+          <div class="name">Radarr</div>
+          <div class="desc">Movie tracking and automation.</div>
+        </a>
+
+        <a class="tile" href="/sonarr/" style="--a:#9b59ff;--b:#5b36c9;">
+          <div class="chip">Sonarr</div>
+          <div class="name">Sonarr</div>
+          <div class="desc">TV series tracking and automation.</div>
+        </a>
+
+        <a class="tile" href="/bazarr/" style="--a:#ffd86f;--b:#ffb347;">
+          <div class="chip">Bazarr</div>
+          <div class="name">Bazarr</div>
+          <div class="desc">Subtitles and audio sync.</div>
+        </a>
+
+        <a class="tile" href="/ombi/" style="--a:#38ef7d;--b:#11998e;">
+          <div class="chip">Ombi</div>
+          <div class="name">Ombi</div>
+          <div class="desc">Requests portal for your users.</div>
+        </a>
+
+        <a class="tile" href="/portainer/" style="--a:#52e5e7;--b:#130cb7;">
+          <div class="chip">Portainer</div>
+          <div class="name">Portainer</div>
+          <div class="desc">Containers and services dashboard.</div>
+        </a>
+      </main>
+
+      <footer>
+        <span>Media Stack</span>
+        <span>Keep it local. Keep it fast.</span>
+      </footer>
+    </div>
+  </body>
+</html>
