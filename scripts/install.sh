@@ -5,11 +5,12 @@ log() {
   printf '%s\n' "$*"
 }
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="$ROOT_DIR/.env"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+ENV_FILE="$REPO_ROOT/.env"
 
 log "Running preflight checks"
-"$ROOT_DIR/scripts/preflight.sh"
+"$REPO_ROOT/scripts/preflight.sh"
 
 set -a
 # shellcheck disable=SC1090
@@ -32,10 +33,14 @@ mkdir -p \
   "$CONFIG_ROOT/radarr" \
   "$CONFIG_ROOT/sonarr"
 
+if [ -d "$CONFIG_ROOT/nginx/certs" ] && [ -z "$(ls -A "$CONFIG_ROOT/nginx/certs" 2>/dev/null)" ]; then
+  log "INFO: $CONFIG_ROOT/nginx/certs is empty. HTTPS is optional; see README."
+fi
+
 log "Ensuring media subfolders exist"
 mkdir -p "$MOVIES_DIR" "$TV_DIR" "$DOWNLOADS_DIR"
 
-TEMPLATE_ROOT="$ROOT_DIR/configs/_templates"
+TEMPLATE_ROOT="$REPO_ROOT/configs/_templates"
 if [ -d "$TEMPLATE_ROOT" ]; then
   if [ -d "$CONFIG_ROOT/nginx/conf.d" ] && [ -z "$(ls -A "$CONFIG_ROOT/nginx/conf.d" 2>/dev/null)" ]; then
     log "Copying nginx template configs"
@@ -47,7 +52,7 @@ if [ -d "$TEMPLATE_ROOT" ]; then
 fi
 
 log "Starting containers"
-cd "$ROOT_DIR"
+cd "$REPO_ROOT"
 docker compose up -d
 
 log "Done"

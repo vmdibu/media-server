@@ -64,20 +64,29 @@ mkdir -p "$MOVIES_DIR" "$TV_DIR" "$DOWNLOADS_DIR"
 
 log "Validating MEDIA_ROOT mount"
 [ -d "$MEDIA_ROOT" ] || fail "MEDIA_ROOT does not exist: $MEDIA_ROOT"
+is_mounted=false
 if command -v findmnt >/dev/null 2>&1; then
-  findmnt -T "$MEDIA_ROOT" >/dev/null 2>&1 || fail "MEDIA_ROOT is not a mounted filesystem: $MEDIA_ROOT"
+  if findmnt -T "$MEDIA_ROOT" >/dev/null 2>&1; then
+    is_mounted=true
+  elif findmnt -M "$MEDIA_ROOT" >/dev/null 2>&1; then
+    is_mounted=true
+  fi
+elif [ -r /proc/self/mountinfo ]; then
+  if awk '{print $5}' /proc/self/mountinfo | grep -Fx "$MEDIA_ROOT" >/dev/null 2>&1; then
+    is_mounted=true
+  fi
 else
-  mount | awk '{print $3}' | grep -Fx "$MEDIA_ROOT" >/dev/null 2>&1 || \
-    fail "MEDIA_ROOT is not a mounted filesystem: $MEDIA_ROOT"
+  if mount | awk '{print $3}' | grep -Fx "$MEDIA_ROOT" >/dev/null 2>&1; then
+    is_mounted=true
+  fi
+fi
+
+if [ "$is_mounted" != "true" ]; then
+  fail "MEDIA_ROOT does not appear to be a mountpoint (including bind mounts): $MEDIA_ROOT"
 fi
 
 log "Checking required ports"
 required_ports=(80 443 7878 8989 6767 9117 8080 3579 9000)
-
-published_ports="$(
-  docker ps --format '{{.Ports}}' | tr ',' '\n' | \
-  sed -n 's/.*:\([0-9][0-9]*\)->.*/\1/p' | sort -u
-)"
 
 has_ss=false
 has_netstat=false
@@ -97,20 +106,27 @@ conflict_details=()
 for port in "${required_ports[@]}"; do
   in_use=false
   details=""
+  is_docker_proxy=false
   if $has_ss; then
     if ss -ltnH "( sport = :$port )" | grep -q .; then
       in_use=true
       details="$(ss -ltnp "( sport = :$port )" | tail -n +2)"
+      if printf '%s\n' "$details" | grep -q "docker-proxy"; then
+        is_docker_proxy=true
+      fi
     fi
   else
     if netstat -ltnp 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)$port$"; then
       in_use=true
       details="$(netstat -ltnp 2>/dev/null | awk -v p=":$port" '$4 ~ p {print}')"
+      if printf '%s\n' "$details" | grep -q "docker-proxy"; then
+        is_docker_proxy=true
+      fi
     fi
   fi
 
   if $in_use; then
-    if ! printf '%s\n' "$published_ports" | grep -qx "$port"; then
+    if [ "$is_docker_proxy" != "true" ]; then
       conflicts+=("$port")
       conflict_details+=("Port $port is in use:\n$details")
     fi
@@ -129,5 +145,3 @@ log "Preflight OK"
 log "CONFIG_ROOT=$CONFIG_ROOT"
 log "MEDIA_ROOT=$MEDIA_ROOT"
 log "MOVIES_DIR=$MOVIES_DIR"
-log "TV_DIR=$TV_DIR"
-log "DOWNLOADS_DIR=$DOWNLOADS_DIR"

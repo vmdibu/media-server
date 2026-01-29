@@ -99,6 +99,21 @@ CONFIG_ROOT/
 - Plex uses host networking, which reduces container isolation; avoid exposing it beyond your LAN.
 - Prefer firewall rules or LAN-only access for all service ports.
 
+## What this installer does NOT do
+
+- It does not configure apps (Radarr/Sonarr/etc.); you must complete setup in each UI.
+- It does not download media for you.
+- It does not set up DNS or HTTPS automatically.
+
+## First-time app setup order
+
+1) qBittorrent
+2) Jackett
+3) Radarr / Sonarr
+4) Bazarr
+5) Plex
+6) Ombi
+
 ## Watchtower note
 
 Watchtower automatically updates running containers. This is convenient, but it can introduce unexpected changes; you may want to disable it for stability.
