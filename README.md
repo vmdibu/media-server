@@ -33,6 +33,31 @@ cp .env.example .env
 docker compose ps
 ```
 
+## Prereqs
+
+- Docker installed and running
+- Docker Compose plugin available (`docker compose`)
+
+## Setup
+
+```bash
+git clone <repo-url>
+cd media-server
+cp .env.example .env
+# Edit .env to match your paths and user IDs
+./scripts/install.sh
+```
+
+## Troubleshooting
+
+- MEDIA_ROOT mount: ensure your media path is actually mounted.
+  - `mount | grep "$MEDIA_ROOT"`
+  - `ls -la "$MEDIA_ROOT"`
+- Port conflicts: if preflight reports a busy port, stop the conflicting process or change the binding.
+- Permissions (PUID/PGID): containers write as the user/group you set in `.env`.
+  - `id -u` / `id -g`
+  - `sudo chown -R $PUID:$PGID $CONFIG_ROOT`
+
 ## Required folders and permissions
 
 All containers use `PUID`/`PGID` from `.env` to map file ownership on the host.

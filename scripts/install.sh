@@ -5,31 +5,16 @@ log() {
   printf '%s\n' "$*"
 }
 
-fail() {
-  printf 'ERROR: %s\n' "$*" >&2
-  exit 1
-}
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$ROOT_DIR/.env"
 
-log "Loading environment from .env"
-[ -f "$ENV_FILE" ] || fail ".env not found at $ENV_FILE"
+log "Running preflight checks"
+"$ROOT_DIR/scripts/preflight.sh"
 
 set -a
 # shellcheck disable=SC1090
 . "$ENV_FILE"
 set +a
-
-log "Validating prerequisites"
-command -v docker >/dev/null 2>&1 || fail "docker is not installed or not in PATH"
-docker compose version >/dev/null 2>&1 || fail "docker compose is not available"
-
-: "${CONFIG_ROOT:?CONFIG_ROOT is not set}"
-: "${MEDIA_ROOT:?MEDIA_ROOT is not set}"
-: "${MOVIES_DIR:?MOVIES_DIR is not set}"
-: "${TV_DIR:?TV_DIR is not set}"
-: "${DOWNLOADS_DIR:?DOWNLOADS_DIR is not set}"
 
 log "Ensuring CONFIG_ROOT exists"
 mkdir -p "$CONFIG_ROOT"
@@ -47,14 +32,19 @@ mkdir -p \
   "$CONFIG_ROOT/radarr" \
   "$CONFIG_ROOT/sonarr"
 
-log "Validating MEDIA_ROOT mount"
-[ -d "$MEDIA_ROOT" ] || fail "MEDIA_ROOT does not exist: $MEDIA_ROOT"
-if [ -z "$(ls -A "$MEDIA_ROOT" 2>/dev/null)" ]; then
-  fail "MEDIA_ROOT appears empty; ensure it is mounted: $MEDIA_ROOT"
-fi
-
 log "Ensuring media subfolders exist"
 mkdir -p "$MOVIES_DIR" "$TV_DIR" "$DOWNLOADS_DIR"
+
+TEMPLATE_ROOT="$ROOT_DIR/configs/_templates"
+if [ -d "$TEMPLATE_ROOT" ]; then
+  if [ -d "$CONFIG_ROOT/nginx/conf.d" ] && [ -z "$(ls -A "$CONFIG_ROOT/nginx/conf.d" 2>/dev/null)" ]; then
+    log "Copying nginx template configs"
+    mkdir -p "$CONFIG_ROOT/nginx/conf.d"
+    cp -a "$TEMPLATE_ROOT/nginx/conf.d/." "$CONFIG_ROOT/nginx/conf.d/"
+  else
+    log "Skipping nginx template copy (target not empty)"
+  fi
+fi
 
 log "Starting containers"
 cd "$ROOT_DIR"
