@@ -5,13 +5,13 @@ services:
     container_name: plex
     network_mode: host
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${PUID}
+      - PGID=${PGID}
       - VERSION=docker
     volumes:
-      - /opt/media-configs/plex:/config
-      - /mnt/plexdrive/NetworkDrive/Plex Movies:/movies
-      - /mnt/plexdrive/NetworkDrive/Plex Series:/tv
+      - ${CONFIG_ROOT}/plex:/config
+      - ${MOVIES_DIR}:/movies
+      - ${TV_DIR}:/tv
     devices:
       - /dev/dri:/dev/dri
     restart: unless-stopped
@@ -24,13 +24,13 @@ services:
       - 6881:6881
       - 6881:6881/udp
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Bucharest
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - WEBUI_PORT=8080
     volumes:
-      - /opt/media-configs/qBittorrent:/config
-      - /mnt/plexdrive/NetworkDrive/downloads:/downloads
+      - ${CONFIG_ROOT}/qBittorrent:/config
+      - ${DOWNLOADS_DIR}:/downloads
     restart: unless-stopped
 
   jackett:
@@ -39,12 +39,12 @@ services:
     ports:
       - 9117:9117
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Bucharest
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /opt/media-configs/jackett:/config
-      - /mnt/plexdrive/NetworkDrive/downloads:/downloads
+      - ${CONFIG_ROOT}/jackett:/config
+      - ${DOWNLOADS_DIR}:/downloads
     restart: unless-stopped
 
   radarr:
@@ -53,13 +53,13 @@ services:
     ports:
       - 7878:7878
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Bucharest
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /opt/media-configs/radarr:/config
-      - /mnt/plexdrive/NetworkDrive/Plex Movies:/movies
-      - /mnt/plexdrive/NetworkDrive/downloads:/downloads
+      - ${CONFIG_ROOT}/radarr:/config
+      - ${MOVIES_DIR}:/movies
+      - ${DOWNLOADS_DIR}:/downloads
     restart: unless-stopped
 
   sonarr:
@@ -68,26 +68,26 @@ services:
     ports:
       - 8989:8989
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Bucharest
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /opt/media-configs/sonarr:/config
-      - /mnt/plexdrive/NetworkDrive/Plex Series:/tv
-      - /mnt/plexdrive/NetworkDrive/downloads:/downloads
+      - ${CONFIG_ROOT}/sonarr:/config
+      - ${TV_DIR}:/tv
+      - ${DOWNLOADS_DIR}:/downloads
     restart: unless-stopped
 
   bazarr:
     image: linuxserver/bazarr
     container_name: bazarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Bucharest
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /opt/media-configs/bazarr:/config
-      - /mnt/plexdrive/NetworkDrive/Plex Movies:/movies
-      - /mnt/plexdrive/NetworkDrive/Plex Series:/tv
+      - ${CONFIG_ROOT}/bazarr:/config
+      - ${MOVIES_DIR}:/movies
+      - ${TV_DIR}:/tv
     ports:
       - 6767:6767
     restart: unless-stopped
@@ -100,7 +100,7 @@ services:
       - 9000:9000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/media-configs/portainer:/data
+      - ${CONFIG_ROOT}/portainer:/data
 
   watchtower:
     image: containrrr/watchtower
@@ -119,18 +119,18 @@ services:
     ports:
       - 3579:3579
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Bucharest
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
-      - /opt/media-configs/ombi:/config
+      - ${CONFIG_ROOT}/ombi:/config
   nginx:
     image: nginx:alpine
     container_name: nginx
     restart: unless-stopped
     volumes:
-      - /opt/media-configs/nginx/conf.d:/etc/nginx/conf.d:ro
-      - /opt/media-configs/nginx/certs:/certs:ro
+      - ${CONFIG_ROOT}/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${CONFIG_ROOT}/nginx/certs:/certs:ro
     ports:
       - "80:80"
       - "443:443"
