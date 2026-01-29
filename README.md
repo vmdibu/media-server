@@ -62,6 +62,19 @@ The table below lists direct ports and optional nginx path proxies. The nginx
 path URLs work when you include the templates under `configs/_templates/nginx/conf.d`
 in your nginx `server` block.
 
+Minimal example (HTTP only):
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  include /etc/nginx/conf.d/*.conf;
+}
+```
+
+The templates proxy by path (for example `/radarr`, `/sonarr`, `/qbit`, etc.).
+DNS is optional; accessing by IP works.
+
 | Service     | Default port | Example URL                    | Nginx path |
 |-------------|--------------|--------------------------------|------------|
 | Plex        | 32400        | http://localhost:32400/web     | /plex      |
