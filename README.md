@@ -44,8 +44,9 @@ Example URLs (HTTP only):
 - http://SERVER_IP/jackett
 - http://SERVER_IP/plex
 
-Plex uses `/plex` via host loopback (`127.0.0.1:32400`) because it runs in host
-network mode.
+Plex uses `/plex` via `host.docker.internal:32400` because it runs in host
+network mode. The nginx service adds an `extra_hosts` entry so the container can
+reach the Docker host gateway.
 
 | Service     | Default port | Example URL                    | Nginx path |
 |-------------|--------------|--------------------------------|------------|
