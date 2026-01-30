@@ -18,6 +18,22 @@ cp .env.example .env
 docker compose ps
 ```
 
+During first setup, open each app on its direct port and set the Base URL in
+the app UI when required (Plex, Portainer, and qBittorrent do not need this).
+The table below is for the initial setup URLs (use `http://SERVER_IP:PORT`),
+then switch to the nginx paths after saving the Base URL.
+
+| App         | Setup URL example               | Base URL setting location in UI |
+|-------------|----------------------------------|----------------------------------|
+| qBittorrent | http://SERVER_IP:8080           | Not required                     |
+| Jackett     | http://SERVER_IP:9117           | Settings → Server Configuration → Base URL |
+| Radarr      | http://SERVER_IP:7878           | Settings → General → URL Base    |
+| Sonarr      | http://SERVER_IP:8989           | Settings → General → URL Base    |
+| Bazarr      | http://SERVER_IP:6767           | Settings → General → Base URL    |
+| Ombi        | http://SERVER_IP:3579           | Settings → General → Base URL    |
+| Plex        | http://SERVER_IP:32400/web      | Not required                     |
+| Portainer   | http://SERVER_IP:9000           | Not required                     |
+
 ## Troubleshooting
 
 - MEDIA_ROOT mount: ensure your media path is actually mounted.
