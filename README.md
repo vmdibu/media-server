@@ -23,6 +23,8 @@ the app UI when required (Plex, Portainer, and qBittorrent do not need this).
 The table below is for the initial setup URLs (use `http://SERVER_IP:PORT`),
 then switch to the nginx paths after saving the Base URL.
 
+The landing page is available at `http://SERVER_IP/`.
+
 | App         | Setup URL example               | Base URL setting location in UI |
 |-------------|----------------------------------|----------------------------------|
 | qBittorrent | http://SERVER_IP:8080           | Not required                     |
@@ -33,6 +35,18 @@ then switch to the nginx paths after saving the Base URL.
 | Ombi        | http://SERVER_IP:3579           | Settings → General → Base URL    |
 | Plex        | http://SERVER_IP:32400/web      | Not required                     |
 | Portainer   | http://SERVER_IP:9000           | Not required                     |
+
+Setup tutorials (official or project docs):
+- Plex setup wizard: `https://support.plex.tv/articles/200288896-basic-setup-wizard/`
+- qBittorrent (LinuxServer image): `https://docs.linuxserver.io/images/docker-qbittorrent/`
+- Jackett installation: `https://github.com/Jackett/Jackett`
+- Radarr quick start: `https://wikiold.servarr.com/Radarr_Quick_Start_Guide`
+- Sonarr installation: `https://wikiold.servarr.com/Sonarr_Installation`
+- Bazarr setup guide: `https://wiki.bazarr.media/Getting-Started/Setup-Guide/`
+- Ombi installation: `https://docs.ombi.app/guides/installation/`
+- Portainer initial setup: `https://docs.portainer.io/start/install-ce/server/setup`
+
+Disclaimer: These tutorials are created and owned by their respective organizations/authors. Full credit goes to them.
 
 ## Troubleshooting
 
