@@ -26,6 +26,7 @@ mkdir -p \
   "$CONFIG_ROOT/jackett" \
   "$CONFIG_ROOT/nginx/certs" \
   "$CONFIG_ROOT/nginx/conf.d" \
+  "$CONFIG_ROOT/nginx/html" \
   "$CONFIG_ROOT/ombi" \
   "$CONFIG_ROOT/plex" \
   "$CONFIG_ROOT/portainer" \
@@ -48,6 +49,14 @@ if [ -d "$TEMPLATE_ROOT" ]; then
     cp -a "$TEMPLATE_ROOT/nginx/conf.d/." "$CONFIG_ROOT/nginx/conf.d/"
   else
     log "Skipping nginx template copy (target not empty)"
+  fi
+
+  if [ -d "$CONFIG_ROOT/nginx/html" ] && [ -z "$(ls -A "$CONFIG_ROOT/nginx/html" 2>/dev/null)" ]; then
+    log "Copying nginx template html"
+    mkdir -p "$CONFIG_ROOT/nginx/html"
+    cp -a "$TEMPLATE_ROOT/nginx/html/." "$CONFIG_ROOT/nginx/html/"
+  else
+    log "Skipping nginx html template copy (target not empty)"
   fi
 fi
 
