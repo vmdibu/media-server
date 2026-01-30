@@ -116,6 +116,24 @@
         font-weight: 600;
       }
 
+      .logo-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: rgba(0,0,0,0.28);
+        border: 1px solid rgba(255,255,255,0.22);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+      }
+
+      .logo {
+        width: 26px;
+        height: 26px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+      }
+
       .tile .desc {
         font-size: 13px;
         color: rgba(255,255,255,0.8);
@@ -164,49 +182,65 @@
 
       <main class="grid">
         <a class="tile" href="/plex/" style="--a:#ffb347;--b:#ff6f4f;">
-          <div class="chip">Plex</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/plex.svg" alt="Plex logo">
+          </div>
           <div class="name">Plex</div>
           <div class="desc">Watch and organize your library.</div>
         </a>
 
         <a class="tile" href="/qbit/" style="--a:#4f8cff;--b:#3b5dff;">
-          <div class="chip">qBittorrent</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/qbit.png" alt="qBittorrent logo">
+          </div>
           <div class="name">qBittorrent</div>
           <div class="desc">Downloads and queue control.</div>
         </a>
 
         <a class="tile" href="/jackett/" style="--a:#00c6a7;--b:#1b7f6a;">
-          <div class="chip">Jackett</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/jackett.svg" alt="Jackett logo">
+          </div>
           <div class="name">Jackett</div>
           <div class="desc">Indexer search and feeds.</div>
         </a>
 
         <a class="tile" href="/radarr/" style="--a:#ff6b6b;--b:#c73866;">
-          <div class="chip">Radarr</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/radarr.png" alt="Radarr logo">
+          </div>
           <div class="name">Radarr</div>
           <div class="desc">Movie tracking and automation.</div>
         </a>
 
         <a class="tile" href="/sonarr/" style="--a:#9b59ff;--b:#5b36c9;">
-          <div class="chip">Sonarr</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/sonarr.png" alt="Sonarr logo">
+          </div>
           <div class="name">Sonarr</div>
           <div class="desc">TV series tracking and automation.</div>
         </a>
 
         <a class="tile" href="/bazarr/" style="--a:#ffd86f;--b:#ffb347;">
-          <div class="chip">Bazarr</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/bazarr.png" alt="Bazarr logo">
+          </div>
           <div class="name">Bazarr</div>
           <div class="desc">Subtitles and audio sync.</div>
         </a>
 
         <a class="tile" href="/ombi/" style="--a:#38ef7d;--b:#11998e;">
-          <div class="chip">Ombi</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/ombi.png" alt="Ombi logo">
+          </div>
           <div class="name">Ombi</div>
           <div class="desc">Requests portal for your users.</div>
         </a>
 
         <a class="tile" href="/portainer/" style="--a:#52e5e7;--b:#130cb7;">
-          <div class="chip">Portainer</div>
+          <div class="logo-badge">
+            <img class="logo" src="assets/logos/portainer.svg" alt="Portainer logo">
+          </div>
           <div class="name">Portainer</div>
           <div class="desc">Containers and services dashboard.</div>
         </a>
