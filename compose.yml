@@ -127,6 +127,19 @@ services:
       - TZ=${TZ}
     volumes:
       - ${CONFIG_ROOT}/ombi:/config
+  disk-usage:
+    image: node:20-alpine
+    container_name: disk-usage
+    restart: unless-stopped
+    environment:
+      - DISK_PATH=${MEDIA_ROOT}
+      - PORT=3000
+      - CACHE_MS=5000
+    volumes:
+      - ./services/disk-usage:/app:ro
+      - ${MEDIA_ROOT}:${MEDIA_ROOT}:ro
+    command: ["node", "/app/server.js"]
+
   nginx:
     image: nginx:alpine
     container_name: nginx

@@ -111,6 +111,16 @@
         box-shadow: 0 24px 48px rgba(0,0,0,0.45);
       }
 
+      .tile--static {
+        cursor: default;
+      }
+
+      .tile--static:hover {
+        transform: none;
+        border-color: rgba(255,255,255,0.06);
+        box-shadow: var(--shadow);
+      }
+
       .tile .name {
         font-size: 20px;
         font-weight: 600;
@@ -137,6 +147,38 @@
       .tile .desc {
         font-size: 13px;
         color: rgba(255,255,255,0.8);
+      }
+
+      .disk-badge {
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .disk-meter {
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.12);
+        overflow: hidden;
+      }
+
+      .disk-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0.5));
+        transition: width 300ms ease;
+      }
+
+      .disk-stats {
+        font-size: 13px;
+        color: rgba(255,255,255,0.85);
+      }
+
+      .disk-meta {
+        font-size: 11px;
+        color: var(--muted);
       }
 
       .chip {
@@ -244,6 +286,17 @@
           <div class="name">Portainer</div>
           <div class="desc">Containers and services dashboard.</div>
         </a>
+
+        <div class="tile tile--static" id="disk-card" style="--a:#1f4037;--b:#99f2c8;">
+          <div class="logo-badge disk-badge">DF</div>
+          <div class="name">Disk</div>
+          <div class="desc" id="disk-path">/mnt/plexdrive</div>
+          <div class="disk-meter" aria-hidden="true">
+            <div class="disk-fill" id="disk-fill"></div>
+          </div>
+          <div class="disk-stats" id="disk-stats">Loading disk usage...</div>
+          <div class="disk-meta" id="disk-updated"></div>
+        </div>
       </main>
 
       <footer>
@@ -251,5 +304,58 @@
         <span>Keep it local. Keep it fast.</span>
       </footer>
     </div>
+    <script>
+      (() => {
+        const statsEl = document.getElementById('disk-stats');
+        const fillEl = document.getElementById('disk-fill');
+        const pathEl = document.getElementById('disk-path');
+        const updatedEl = document.getElementById('disk-updated');
+
+        const formatBytes = (bytes) => {
+          if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+          const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+          let value = bytes;
+          let unitIndex = 0;
+          while (value >= 1024 && unitIndex < units.length - 1) {
+            value /= 1024;
+            unitIndex += 1;
+          }
+          return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+        };
+
+        const updateDisk = async () => {
+          try {
+            const response = await fetch('/api/disk', { cache: 'no-store' });
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            const total = Number(data.totalBytes || 0);
+            const used = Number(data.usedBytes || 0);
+            const free = Number(data.freeBytes || 0);
+            const percent = Number(data.usedPercent || (total ? (used / total) * 100 : 0));
+
+            if (data.path) {
+              pathEl.textContent = data.path;
+            }
+            fillEl.style.width = `${Math.min(100, Math.max(0, percent)).toFixed(1)}%`;
+            statsEl.textContent = `${formatBytes(used)} used | ${formatBytes(free)} free | ${formatBytes(total)} total`;
+            if (data.updatedAt) {
+              const ts = new Date(data.updatedAt);
+              updatedEl.textContent = Number.isNaN(ts.getTime())
+                ? ''
+                : `Updated ${ts.toLocaleTimeString()}`;
+            }
+          } catch (error) {
+            fillEl.style.width = '0%';
+            statsEl.textContent = 'Disk stats unavailable';
+            updatedEl.textContent = '';
+          }
+        };
+
+        updateDisk();
+        setInterval(updateDisk, 30000);
+      })();
+    </script>
   </body>
 </html>
