@@ -29,11 +29,11 @@ sudo blkid
 ```
 2) Create a mountpoint (adjust to your path):
 ```
-sudo mkdir -p /mnt/plexdrive/NetworkDrive
+sudo mkdir -p /mnt/mediabox
 ```
 3) Edit `/etc/fstab` and add a line like:
 ```
-UUID=YOUR_UUID_HERE  /mnt/plexdrive/NetworkDrive  ext4  defaults,nofail  0  2
+UUID=YOUR_UUID_HERE  /mnt/mediabox  ext4  defaults,nofail  0  2
 ```
 4) Test the mount:
 ```
@@ -41,7 +41,7 @@ sudo mount -a
 ```
 5) Verify it is mounted:
 ```
-findmnt /mnt/plexdrive/NetworkDrive
+findmnt /mnt/mediabox
 ```
 
 Notes:
