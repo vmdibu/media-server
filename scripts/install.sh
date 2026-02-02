@@ -51,9 +51,13 @@ if [ -d "$TEMPLATE_ROOT" ]; then
     log "Skipping nginx template copy (target not empty)"
   fi
 
-  log "Copying nginx template html"
-  mkdir -p "$CONFIG_ROOT/nginx/html"
-  cp -a "$TEMPLATE_ROOT/nginx/html/." "$CONFIG_ROOT/nginx/html/"
+  if [ -d "$CONFIG_ROOT/nginx/html" ] && [ -z "$(ls -A "$CONFIG_ROOT/nginx/html" 2>/dev/null)" ]; then
+    log "Copying nginx template html"
+    mkdir -p "$CONFIG_ROOT/nginx/html"
+    cp -a "$TEMPLATE_ROOT/nginx/html/." "$CONFIG_ROOT/nginx/html/"
+  else
+    log "Skipping nginx html template copy (target not empty)"
+  fi
 fi
 
 log "Starting containers"
