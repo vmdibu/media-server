@@ -66,6 +66,12 @@ then switch to the nginx paths after saving the Base URL.
 
 The landing page is available at `http://SERVER_IP/`.
 
+Mediabox webapp:
+- URL: `http://SERVER_IP/`
+- Served by nginx from `$CONFIG_ROOT/nginx/html`
+- Update flow: edit `configs/_templates/nginx/html/index.html` and rerun
+  `./scripts/install.sh` (it always copies the HTML templates)
+
 | App         | Setup URL example               | Base URL setting location in UI |
 |-------------|----------------------------------|----------------------------------|
 | qBittorrent | http://SERVER_IP:8080           | Not required                     |
