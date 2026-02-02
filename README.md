@@ -131,6 +131,17 @@ CONFIG_ROOT/
 - Plex uses host networking, which reduces container isolation; avoid exposing it beyond your LAN.
 - Prefer firewall rules or LAN-only access for all service ports.
 
+## Disk usage endpoint
+
+The disk usage API (`/api/disk`) runs `df` on the actual mount (recommended for Linux).
+This works reliably with:
+
+- USB disks
+- FUSE
+- mergerfs
+- Plexdrive
+- Docker bind mounts
+
 ## What this installer does NOT do
 
 - It does not configure apps (Radarr/Sonarr/etc.); you must complete setup in each UI.

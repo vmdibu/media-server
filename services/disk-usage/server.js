@@ -32,6 +32,8 @@ function runDf(args) {
 }
 
 async function readDiskStats() {
+  // Correct way in Node.js (Linux): use df on the actual mount (recommended).
+  // This works reliably with USB disks, FUSE, mergerfs, Plexdrive, and Docker bind mounts.
   let stdout;
   try {
     stdout = await runDf(['-kP', diskPath]);
