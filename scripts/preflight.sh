@@ -100,33 +100,58 @@ if ! $has_ss && ! $has_netstat; then
   fail "Neither ss nor netstat is available to check ports"
 fi
 
+project_ports=()
+compose_ids=()
+compose_args=(docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yml")
+
+if "${compose_args[@]}" ps -q >/dev/null 2>&1; then
+  mapfile -t compose_ids < <("${compose_args[@]}" ps -q 2>/dev/null)
+fi
+
+if [ "${#compose_ids[@]}" -gt 0 ]; then
+  ports_raw="$(
+    docker inspect -f '{{range $p,$conf := .NetworkSettings.Ports}}{{if $conf}}{{(index $conf 0).HostPort}}{{"\n"}}{{end}}{{end}}' \
+      "${compose_ids[@]}" 2>/dev/null || true
+  )"
+  while IFS= read -r port; do
+    if [ -n "$port" ]; then
+      project_ports+=("$port")
+    fi
+  done <<< "$ports_raw"
+fi
+
+is_project_port() {
+  local target="$1"
+  for item in "${project_ports[@]}"; do
+    if [ "$item" = "$target" ]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 conflicts=()
 conflict_details=()
+in_use_ports=()
 
 for port in "${required_ports[@]}"; do
   in_use=false
   details=""
-  is_docker_proxy=false
   if $has_ss; then
     if ss -ltnH "( sport = :$port )" | grep -q .; then
       in_use=true
       details="$(ss -ltnp "( sport = :$port )" | tail -n +2)"
-      if printf '%s\n' "$details" | grep -q "docker-proxy"; then
-        is_docker_proxy=true
-      fi
     fi
   else
     if netstat -ltnp 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)$port$"; then
       in_use=true
       details="$(netstat -ltnp 2>/dev/null | awk -v p=":$port" '$4 ~ p {print}')"
-      if printf '%s\n' "$details" | grep -q "docker-proxy"; then
-        is_docker_proxy=true
-      fi
     fi
   fi
 
   if $in_use; then
-    if [ "$is_docker_proxy" != "true" ]; then
+    in_use_ports+=("$port")
+    if ! is_project_port "$port"; then
       conflicts+=("$port")
       conflict_details+=("Port $port is in use:\n$details")
     fi
@@ -134,11 +159,15 @@ for port in "${required_ports[@]}"; do
 done
 
 if [ "${#conflicts[@]}" -gt 0 ]; then
-  printf 'ERROR: Port conflicts found (non-Docker processes): %s\n' "${conflicts[*]}" >&2
+  printf 'ERROR: Port conflicts found (not owned by this compose project): %s\n' "${conflicts[*]}" >&2
   for item in "${conflict_details[@]}"; do
     printf '%s\n' "$item" >&2
   done
   exit 1
+fi
+
+if [ "${#in_use_ports[@]}" -eq "${#required_ports[@]}" ] && [ "${#project_ports[@]}" -gt 0 ]; then
+  printf 'WARN: All required ports are already bound by the current compose project. Continuing.\n' >&2
 fi
 
 log "Preflight OK"
