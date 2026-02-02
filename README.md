@@ -6,11 +6,52 @@ Docker Compose stack for Plex, *arr apps, qBittorrent, Ombi, Nginx, and supporti
 
 - Docker installed and running
 - Docker Compose plugin available (`docker compose`)
+- Ensure your media mount is defined in `/etc/fstab` (so it survives reboots)
+- Make scripts executable: `chmod +x scripts/*.sh`
+
+## fstab tutorial (media mount)
+
+Preferred: run the interactive helper and follow the prompts. It pulls defaults
+from `.env` and, if the mount already exists, auto-detects the current source,
+filesystem type, and options:
+```
+bash scripts/setup-fstab.sh
+```
+
+Manual steps:
+
+1) Identify the filesystem UUID for your media disk (two common options):
+```
+lsblk -f
+```
+```
+sudo blkid
+```
+2) Create a mountpoint (adjust to your path):
+```
+sudo mkdir -p /mnt/plexdrive/NetworkDrive
+```
+3) Edit `/etc/fstab` and add a line like:
+```
+UUID=YOUR_UUID_HERE  /mnt/plexdrive/NetworkDrive  ext4  defaults,nofail  0  2
+```
+4) Test the mount:
+```
+sudo mount -a
+```
+5) Verify it is mounted:
+```
+findmnt /mnt/plexdrive/NetworkDrive
+```
+
+Notes:
+- Replace `ext4` with your actual filesystem (e.g., `xfs`, `ntfs`, `exfat`, or `fuse.rclone`).
+- For network or FUSE mounts, you may need specific options; consult the tool's docs.
 
 ## Quick start
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/vmdibu/media-server.git
 cd media-server
 cp .env.example .env
 # Edit .env to match your paths and user IDs
@@ -28,11 +69,11 @@ The landing page is available at `http://SERVER_IP/`.
 | App         | Setup URL example               | Base URL setting location in UI |
 |-------------|----------------------------------|----------------------------------|
 | qBittorrent | http://SERVER_IP:8080           | Not required                     |
-| Jackett     | http://SERVER_IP:9117           | Settings → Server Configuration → Base URL |
-| Radarr      | http://SERVER_IP:7878           | Settings → General → URL Base    |
-| Sonarr      | http://SERVER_IP:8989           | Settings → General → URL Base    |
-| Bazarr      | http://SERVER_IP:6767           | Settings → General → Base URL    |
-| Ombi        | http://SERVER_IP:3579           | Settings → General → Base URL    |
+| Jackett     | http://SERVER_IP:9117           | Settings -> Server Configuration -> Base URL |
+| Radarr      | http://SERVER_IP:7878           | Settings -> General -> URL Base    |
+| Sonarr      | http://SERVER_IP:8989           | Settings -> General -> URL Base    |
+| Bazarr      | http://SERVER_IP:6767           | Settings -> General -> Base URL    |
+| Ombi        | http://SERVER_IP:3579           | Settings -> General -> Base URL    |
 | Plex        | http://SERVER_IP:32400/web      | Not required                     |
 | Portainer   | http://SERVER_IP:9000           | Not required                     |
 
@@ -53,7 +94,8 @@ Disclaimer: These tutorials are created and owned by their respective organizati
 - MEDIA_ROOT mount: ensure your media path is actually mounted.
   - `mount | grep "$MEDIA_ROOT"`
   - `ls -la "$MEDIA_ROOT"`
-- Port conflicts: if preflight reports a busy port, stop the conflicting process or change the binding.
+- Port conflicts: preflight allows ports already bound by this compose project.
+  If a different process owns a required port, stop it or change the binding.
 - Permissions (PUID/PGID): containers write as the user/group you set in `.env`.
   - `id -u` / `id -g`
   - `sudo chown -R $PUID:$PGID $CONFIG_ROOT`
@@ -64,6 +106,9 @@ The table below lists direct ports and optional nginx path proxies. When
 `configs/_templates/nginx/conf.d` exists, the installer copies templates into
 `$CONFIG_ROOT/nginx/conf.d`, so path routing works immediately. After the first
 install, edit the live configs under `$CONFIG_ROOT/nginx/conf.d`.
+
+The installer always copies the HTML templates into
+`$CONFIG_ROOT/nginx/html`, which will overwrite the landing page on each run.
 
 Example URLs (HTTP only):
 - http://SERVER_IP/radarr
@@ -89,12 +134,14 @@ reach the Docker host gateway.
 | Bazarr      | 6767         | http://localhost:6767          | /bazarr    |
 | Ombi        | 3579         | http://localhost:3579          | /ombi      |
 | Portainer   | 9000         | http://localhost:9000          | /portainer |
+| Disk usage  | 3000         | http://localhost:3000/disk     | /api/disk  |
 | Nginx       | 80/443       | http://localhost               | N/A        |
 
 ## Runtime folder contract (CONFIG_ROOT)
 
-The installer creates the canonical directory structure under `CONFIG_ROOT` and
-never overwrites existing files or directories.
+The installer creates the canonical directory structure under `CONFIG_ROOT`.
+It does not overwrite existing directories, but it does overwrite the nginx
+HTML templates on each run.
 
 ```
 CONFIG_ROOT/
