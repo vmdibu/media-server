@@ -66,8 +66,20 @@ mkdir -p \
 CERT_DIR="$CONFIG_ROOT/nginx/certs"
 CERT_FILE="$CERT_DIR/fullchain.pem"
 KEY_FILE="$CERT_DIR/privkey.pem"
+CERT_HOST="mediabox.home.arpa"
+needs_new_cert=false
+
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
+  needs_new_cert=true
   log "TLS cert files not found. Generating self-signed cert for nginx."
+elif command -v openssl >/dev/null 2>&1; then
+  if ! openssl x509 -in "$CERT_FILE" -noout -ext subjectAltName 2>/dev/null | grep -Fq "DNS:$CERT_HOST"; then
+    needs_new_cert=true
+    log "Existing TLS cert does not include $CERT_HOST SAN. Regenerating self-signed cert."
+  fi
+fi
+
+if [ "$needs_new_cert" = "true" ]; then
   command -v openssl >/dev/null 2>&1 || {
     log "ERROR: openssl is required to generate TLS certs."
     log "Provide certs manually at:"
@@ -75,11 +87,31 @@ if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
     log "  $KEY_FILE"
     exit 1
   }
+
+  CERT_CONF="$(mktemp)"
+  cat >"$CERT_CONF" <<EOF
+[req]
+distinguished_name = req_distinguished_name
+x509_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+CN = $CERT_HOST
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = $CERT_HOST
+DNS.2 = localhost
+EOF
+
   openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
-    -subj "/CN=localhost" \
     -keyout "$KEY_FILE" \
-    -out "$CERT_FILE" >/dev/null 2>&1
-  log "Generated self-signed TLS certs in $CERT_DIR"
+    -out "$CERT_FILE" \
+    -config "$CERT_CONF" >/dev/null 2>&1
+  rm -f "$CERT_CONF"
+  log "Generated self-signed TLS certs for $CERT_HOST in $CERT_DIR"
 fi
 
 log "Ensuring media subfolders exist"
