@@ -67,19 +67,37 @@ CERT_DIR="$CONFIG_ROOT/nginx/certs"
 CERT_FILE="$CERT_DIR/fullchain.pem"
 KEY_FILE="$CERT_DIR/privkey.pem"
 CERT_HOST="mediabox.home.arpa"
+CA_CERT_FILE="$CERT_DIR/local-ca.crt"
+CA_KEY_FILE="$CERT_DIR/local-ca.key"
+LEAF_CERT_FILE="$CERT_DIR/server.crt"
+LEAF_CSR_FILE="$CERT_DIR/server.csr"
 needs_new_cert=false
+needs_new_ca=false
 
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
   needs_new_cert=true
-  log "TLS cert files not found. Generating self-signed cert for nginx."
+  log "TLS cert files not found. Generating local-CA-signed cert for nginx."
+fi
+
+if [ ! -f "$CA_CERT_FILE" ] || [ ! -f "$CA_KEY_FILE" ]; then
+  needs_new_ca=true
+  needs_new_cert=true
+  log "Local CA files not found. Generating local CA and server cert for nginx."
 elif command -v openssl >/dev/null 2>&1; then
   if ! openssl x509 -in "$CERT_FILE" -noout -ext subjectAltName 2>/dev/null | grep -Fq "DNS:$CERT_HOST"; then
     needs_new_cert=true
-    log "Existing TLS cert does not include $CERT_HOST SAN. Regenerating self-signed cert."
+    log "Existing TLS cert does not include $CERT_HOST SAN. Regenerating server cert."
+  fi
+
+  cert_issuer="$(openssl x509 -in "$CERT_FILE" -noout -issuer 2>/dev/null | sed 's/^issuer= *//')"
+  ca_subject="$(openssl x509 -in "$CA_CERT_FILE" -noout -subject 2>/dev/null | sed 's/^subject= *//')"
+  if [ -n "$cert_issuer" ] && [ -n "$ca_subject" ] && [ "$cert_issuer" != "$ca_subject" ]; then
+    needs_new_cert=true
+    log "Existing TLS cert is not signed by local CA. Regenerating server cert."
   fi
 fi
 
-if [ "$needs_new_cert" = "true" ]; then
+if [ "$needs_new_ca" = "true" ] || [ "$needs_new_cert" = "true" ]; then
   command -v openssl >/dev/null 2>&1 || {
     log "ERROR: openssl is required to generate TLS certs."
     log "Provide certs manually at:"
@@ -87,12 +105,26 @@ if [ "$needs_new_cert" = "true" ]; then
     log "  $KEY_FILE"
     exit 1
   }
+fi
 
+if [ "$needs_new_ca" = "true" ]; then
+  openssl req -x509 -nodes -newkey rsa:4096 -days 3650 \
+    -subj "/CN=MediaBox Local Root CA" \
+    -addext "basicConstraints=critical,CA:TRUE" \
+    -addext "keyUsage=critical,keyCertSign,cRLSign" \
+    -addext "subjectKeyIdentifier=hash" \
+    -keyout "$CA_KEY_FILE" \
+    -out "$CA_CERT_FILE" >/dev/null 2>&1
+  chmod 600 "$CA_KEY_FILE"
+  log "Generated local CA cert: $CA_CERT_FILE"
+fi
+
+if [ "$needs_new_cert" = "true" ]; then
   CERT_CONF="$(mktemp)"
   cat >"$CERT_CONF" <<EOF
 [req]
 distinguished_name = req_distinguished_name
-x509_extensions = v3_req
+req_extensions = v3_req
 prompt = no
 
 [req_distinguished_name]
@@ -106,12 +138,27 @@ DNS.1 = $CERT_HOST
 DNS.2 = localhost
 EOF
 
-  openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+  openssl req -new -nodes -newkey rsa:2048 \
     -keyout "$KEY_FILE" \
-    -out "$CERT_FILE" \
+    -out "$LEAF_CSR_FILE" \
     -config "$CERT_CONF" >/dev/null 2>&1
+  chmod 600 "$KEY_FILE"
+
+  openssl x509 -req -days 825 -sha256 \
+    -in "$LEAF_CSR_FILE" \
+    -CA "$CA_CERT_FILE" \
+    -CAkey "$CA_KEY_FILE" \
+    -CAcreateserial \
+    -out "$LEAF_CERT_FILE" \
+    -extfile "$CERT_CONF" \
+    -extensions v3_req >/dev/null 2>&1
+
+  cat "$LEAF_CERT_FILE" "$CA_CERT_FILE" > "$CERT_FILE"
+
   rm -f "$CERT_CONF"
-  log "Generated self-signed TLS certs for $CERT_HOST in $CERT_DIR"
+  rm -f "$LEAF_CSR_FILE"
+  log "Generated local-CA-signed TLS certs for $CERT_HOST in $CERT_DIR"
+  log "Import CA into browsers/devices for trust: $CA_CERT_FILE"
 fi
 
 log "Ensuring media subfolders exist"

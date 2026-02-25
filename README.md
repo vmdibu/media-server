@@ -153,14 +153,19 @@ Docker host gateway.
 
 ## HTTPS certificates
 
-On install, if these files are missing, the installer generates a self-signed
-certificate for local HTTPS access:
+On install, if these files are missing (or if the cert does not match
+`mediabox.home.arpa`), the installer generates a local CA and a server cert:
 
 - `$CONFIG_ROOT/nginx/certs/fullchain.pem`
 - `$CONFIG_ROOT/nginx/certs/privkey.pem`
+- `$CONFIG_ROOT/nginx/certs/local-ca.crt`
+- `$CONFIG_ROOT/nginx/certs/local-ca.key`
 
-For trusted browser certificates, replace those files with your own cert/key
-pair and restart nginx:
+For browser trust with the generated cert, import:
+
+- `$CONFIG_ROOT/nginx/certs/local-ca.crt`
+
+For production/public trust, replace cert/key with your own and restart nginx:
 
 ```bash
 docker compose restart nginx
