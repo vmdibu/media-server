@@ -28,7 +28,11 @@ check_http_code() {
   local url="$1"
   local allowed_csv="$2"
   local code
-  code="$(curl -sS -o /dev/null -w '%{http_code}' "$url" || true)"
+  if [[ "$url" == https://* ]]; then
+    code="$(curl -k -sS -o /dev/null -w '%{http_code}' "$url" || true)"
+  else
+    code="$(curl -sS -o /dev/null -w '%{http_code}' "$url" || true)"
+  fi
   case ",$allowed_csv," in
     *",$code,"*) return 0 ;;
   esac
