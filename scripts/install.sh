@@ -63,8 +63,23 @@ mkdir -p \
   "$CONFIG_ROOT/radarr" \
   "$CONFIG_ROOT/sonarr"
 
-if [ -d "$CONFIG_ROOT/nginx/certs" ] && [ -z "$(ls -A "$CONFIG_ROOT/nginx/certs" 2>/dev/null)" ]; then
-  log "INFO: $CONFIG_ROOT/nginx/certs is empty. HTTPS is optional; see README."
+CERT_DIR="$CONFIG_ROOT/nginx/certs"
+CERT_FILE="$CERT_DIR/fullchain.pem"
+KEY_FILE="$CERT_DIR/privkey.pem"
+if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
+  log "TLS cert files not found. Generating self-signed cert for nginx."
+  command -v openssl >/dev/null 2>&1 || {
+    log "ERROR: openssl is required to generate TLS certs."
+    log "Provide certs manually at:"
+    log "  $CERT_FILE"
+    log "  $KEY_FILE"
+    exit 1
+  }
+  openssl req -x509 -nodes -newkey rsa:2048 -days 365 \
+    -subj "/CN=localhost" \
+    -keyout "$KEY_FILE" \
+    -out "$CERT_FILE" >/dev/null 2>&1
+  log "Generated self-signed TLS certs in $CERT_DIR"
 fi
 
 log "Ensuring media subfolders exist"

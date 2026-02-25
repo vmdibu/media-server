@@ -70,10 +70,10 @@ the app UI when required (Plex, Portainer, and qBittorrent do not need this).
 The table below is for the initial setup URLs (use `http://SERVER_IP:PORT`),
 then switch to the nginx paths after saving the Base URL.
 
-The landing page is available at `http://SERVER_IP/`.
+The landing page is available at `https://SERVER_IP/`.
 
 Mediabox webapp:
-- URL: `http://SERVER_IP/`
+- URL: `https://SERVER_IP/`
 - Served by nginx from `$CONFIG_ROOT/nginx/html`
 - Update flow: edit `configs/_templates/nginx/html/index.html` and rerun
   `./scripts/install.sh` (it always copies the HTML templates)
@@ -122,15 +122,15 @@ install, edit the live configs under `$CONFIG_ROOT/nginx/conf.d`.
 The installer always copies the HTML templates into
 `$CONFIG_ROOT/nginx/html`, which will overwrite the landing page on each run.
 
-Example URLs (HTTP only):
-- http://SERVER_IP/radarr
-- http://SERVER_IP/sonarr
-- http://SERVER_IP/qbit
-- http://SERVER_IP/bazarr
-- http://SERVER_IP/ombi
-- http://SERVER_IP/portainer
-- http://SERVER_IP/jackett
-- http://SERVER_IP/plex
+Example URLs (HTTPS):
+- https://SERVER_IP/radarr
+- https://SERVER_IP/sonarr
+- https://SERVER_IP/qbit
+- https://SERVER_IP/bazarr
+- https://SERVER_IP/ombi
+- https://SERVER_IP/portainer
+- https://SERVER_IP/jackett
+- https://SERVER_IP/plex
 
 Nginx path proxies route to published host ports via `host.docker.internal`
 to avoid stale container DNS resolution after service recreation. Plex `/plex`
@@ -149,7 +149,22 @@ Docker host gateway.
 | Ombi        | 3579         | http://localhost:3579          | /ombi      |
 | Portainer   | 9000         | http://localhost:9000          | /portainer |
 | Disk usage  | 3000         | http://localhost:3000/disk     | /api/disk  |
-| Nginx       | 80/443       | http://localhost               | N/A        |
+| Nginx       | 80/443       | https://localhost              | N/A        |
+
+## HTTPS certificates
+
+On install, if these files are missing, the installer generates a self-signed
+certificate for local HTTPS access:
+
+- `$CONFIG_ROOT/nginx/certs/fullchain.pem`
+- `$CONFIG_ROOT/nginx/certs/privkey.pem`
+
+For trusted browser certificates, replace those files with your own cert/key
+pair and restart nginx:
+
+```bash
+docker compose restart nginx
+```
 
 ## Runtime folder contract (CONFIG_ROOT)
 
@@ -207,7 +222,7 @@ This works reliably with:
 
 - It does not configure apps (Radarr/Sonarr/etc.); you must complete setup in each UI.
 - It does not download media for you.
-- It does not set up DNS or HTTPS automatically.
+- It does not set up DNS or publicly trusted HTTPS certificates automatically.
 
 ## First-time app setup order
 

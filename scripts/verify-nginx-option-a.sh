@@ -56,9 +56,13 @@ pass "Loaded .env (CONFIG_ROOT=$CONFIG_ROOT)"
 
 COMPOSE=(docker compose --project-directory "$ROOT_DIR" -f "$ROOT_DIR/compose.yml")
 LIVE_CONF="$CONFIG_ROOT/nginx/conf.d/$CONF_BASENAME"
+CERT_FILE="$CONFIG_ROOT/nginx/certs/fullchain.pem"
+KEY_FILE="$CONFIG_ROOT/nginx/certs/privkey.pem"
 
 step "Checking live nginx config file"
 [ -f "$LIVE_CONF" ] || fail "Live nginx config not found: $LIVE_CONF"
+[ -f "$CERT_FILE" ] || fail "TLS certificate not found: $CERT_FILE"
+[ -f "$KEY_FILE" ] || fail "TLS private key not found: $KEY_FILE"
 
 for target in \
   "host.docker.internal:3000" \
@@ -73,6 +77,10 @@ do
   grep -q "$target" "$LIVE_CONF" || fail "Missing upstream in live conf: $target"
 done
 pass "Live conf uses host.docker.internal for media app upstreams"
+grep -q "listen 443 ssl" "$LIVE_CONF" || fail "HTTPS listener missing from live conf"
+grep -q "ssl_certificate /certs/fullchain.pem" "$LIVE_CONF" || fail "ssl_certificate path missing from live conf"
+grep -q "ssl_certificate_key /certs/privkey.pem" "$LIVE_CONF" || fail "ssl_certificate_key path missing from live conf"
+pass "Live conf contains HTTPS listener and TLS cert directives"
 
 step "Checking disk-usage host port mapping"
 PORT_OUTPUT="$("${COMPOSE[@]}" port disk-usage 3000 2>/dev/null || true)"
@@ -92,10 +100,15 @@ step "Checking loaded nginx config references host.docker.internal"
 "${COMPOSE[@]}" exec -T nginx nginx -T 2>/dev/null | grep -q "host.docker.internal" || fail "Loaded nginx config does not contain host.docker.internal upstreams"
 pass "Loaded nginx config includes host.docker.internal upstreams"
 
-step "Running end-to-end HTTP checks through nginx"
-curl -fsS http://localhost/api/disk >/dev/null || fail "GET /api/disk failed"
-check_http_code "http://localhost/radarr/" "200,301,302,307,308,401,403"
-check_http_code "http://localhost/ombi/" "200,301,302,307,308,401,403"
-pass "nginx endpoint checks passed"
+step "Running end-to-end HTTP to HTTPS redirect checks"
+check_http_code "http://localhost/" "301,302,307,308"
+check_http_code "http://localhost/api/disk" "301,302,307,308"
+pass "HTTP redirects to HTTPS"
+
+step "Running end-to-end HTTPS checks through nginx"
+curl -kfsS https://localhost/api/disk >/dev/null || fail "GET https://localhost/api/disk failed"
+check_http_code "https://localhost/radarr/" "200,301,302,307,308,401,403"
+check_http_code "https://localhost/ombi/" "200,301,302,307,308,401,403"
+pass "HTTPS endpoint checks passed"
 
 info "Verification complete"
