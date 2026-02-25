@@ -2,6 +2,7 @@
 set -euo pipefail
 
 RECREATE_MEDIA_CONFIG=0
+FORCE_REGENERATE_CERTS=0
 
 log() {
   printf '%s\n' "$*"
@@ -13,6 +14,7 @@ Usage: ./scripts/install.sh [--recreate-media-config]
 
 Options:
   --recreate-media-config   Force-copy nginx/conf.d/media-server.conf from templates.
+  --force-regenerate-certs  Force-regenerate local CA and nginx TLS certs.
   -h, --help                Show this help.
 EOF
 }
@@ -21,6 +23,9 @@ for arg in "$@"; do
   case "$arg" in
     --recreate-media-config)
       RECREATE_MEDIA_CONFIG=1
+      ;;
+    --force-regenerate-certs)
+      FORCE_REGENERATE_CERTS=1
       ;;
     -h|--help)
       usage
@@ -66,7 +71,7 @@ mkdir -p \
 CERT_DIR="$CONFIG_ROOT/nginx/certs"
 CERT_FILE="$CERT_DIR/fullchain.pem"
 KEY_FILE="$CERT_DIR/privkey.pem"
-CERT_HOST="mediabox.home.arpa"
+CERT_HOST="${CERT_HOST:-mediabox.home.arpa}"
 CA_CERT_FILE="$CERT_DIR/local-ca.crt"
 CA_KEY_FILE="$CERT_DIR/local-ca.key"
 LEAF_CERT_FILE="$CERT_DIR/server.crt"
@@ -75,30 +80,41 @@ needs_new_cert=false
 needs_new_ca=false
 manage_local_ca=false
 
-if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
+if [ "$FORCE_REGENERATE_CERTS" -eq 1 ]; then
+  needs_new_ca=true
+  needs_new_cert=true
+  manage_local_ca=true
+  log "Force-regenerating local CA and server certs for $CERT_HOST."
+fi
+
+if [ "$FORCE_REGENERATE_CERTS" -eq 0 ] && { [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; }; then
   needs_new_cert=true
   manage_local_ca=true
   log "TLS cert files not found. Generating local-CA-signed cert for nginx."
 fi
 
-if [ ! -f "$CA_CERT_FILE" ] || [ ! -f "$CA_KEY_FILE" ]; then
-  if [ "$manage_local_ca" = "true" ]; then
-    needs_new_ca=true
-    needs_new_cert=true
-    log "Local CA files not found. Generating local CA and server cert for nginx."
-  fi
-elif command -v openssl >/dev/null 2>&1; then
-  cert_issuer="$(openssl x509 -in "$CERT_FILE" -noout -issuer 2>/dev/null | sed 's/^issuer= *//')"
-  ca_subject="$(openssl x509 -in "$CA_CERT_FILE" -noout -subject 2>/dev/null | sed 's/^subject= *//')"
-
-  if [ -n "$cert_issuer" ] && [ -n "$ca_subject" ] && [ "$cert_issuer" = "$ca_subject" ]; then
-    manage_local_ca=true
-    if ! openssl x509 -in "$CERT_FILE" -noout -ext subjectAltName 2>/dev/null | grep -Fq "DNS:$CERT_HOST"; then
+if [ "$FORCE_REGENERATE_CERTS" -eq 0 ]; then
+  if [ ! -f "$CA_CERT_FILE" ] || [ ! -f "$CA_KEY_FILE" ]; then
+    if [ "$manage_local_ca" = "true" ]; then
+      needs_new_ca=true
       needs_new_cert=true
-      log "Local-CA cert does not include $CERT_HOST SAN. Regenerating server cert."
+      log "Local CA files not found. Generating local CA and server cert for nginx."
     fi
   else
-    log "Detected custom TLS cert/key. Preserving existing files."
+    if command -v openssl >/dev/null 2>&1; then
+      cert_issuer="$(openssl x509 -in "$CERT_FILE" -noout -issuer 2>/dev/null | sed 's/^issuer= *//')"
+      ca_subject="$(openssl x509 -in "$CA_CERT_FILE" -noout -subject 2>/dev/null | sed 's/^subject= *//')"
+
+      if [ -n "$cert_issuer" ] && [ -n "$ca_subject" ] && [ "$cert_issuer" = "$ca_subject" ]; then
+        manage_local_ca=true
+        if ! openssl x509 -in "$CERT_FILE" -noout -ext subjectAltName 2>/dev/null | grep -Fq "DNS:$CERT_HOST"; then
+          needs_new_cert=true
+          log "Local-CA cert does not include $CERT_HOST SAN. Regenerating server cert."
+        fi
+      else
+        log "Detected custom TLS cert/key. Preserving existing files."
+      fi
+    fi
   fi
 fi
 

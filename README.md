@@ -55,6 +55,7 @@ git clone https://github.com/vmdibu/media-server.git
 cd media-server
 cp .env.example .env
 # Edit .env to match your paths and user IDs
+# Optional: set CERT_HOST for generated local TLS certs
 ./scripts/install.sh
 docker compose ps
 ```
@@ -63,6 +64,11 @@ If you need to refresh the live nginx media proxy config from the template,
 run:
 ```bash
 ./scripts/install.sh --recreate-media-config
+```
+
+To rotate local TLS materials explicitly, run:
+```bash
+./scripts/install.sh --force-regenerate-certs
 ```
 
 During first setup, open each app on its direct port and set the Base URL in
@@ -155,7 +161,8 @@ Docker host gateway.
 ## HTTPS certificates
 
 On install, if these files are missing (or if the cert does not match
-`mediabox.home.arpa`), the installer generates a local CA and a server cert:
+`CERT_HOST` from `.env`, default `mediabox.home.arpa`), the installer
+generates a local CA and a server cert:
 
 - `$CONFIG_ROOT/nginx/certs/fullchain.pem`
 - `$CONFIG_ROOT/nginx/certs/privkey.pem`
@@ -172,7 +179,9 @@ Custom cert behavior:
 - If `fullchain.pem`/`privkey.pem` are present and not signed by the local CA,
   the installer preserves them.
 - Local-CA certs are regenerated only when missing or when SAN does not include
-  `mediabox.home.arpa`.
+  `CERT_HOST`.
+- Use `./scripts/install.sh --force-regenerate-certs` to rotate local CA/server
+  cert files on demand.
 
 For production/public trust, replace cert/key with your own and restart nginx:
 

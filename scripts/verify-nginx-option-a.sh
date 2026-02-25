@@ -115,4 +115,10 @@ check_http_code "https://localhost/radarr/" "200,301,302,307,308,401,403"
 check_http_code "https://localhost/ombi/" "200,301,302,307,308,401,403"
 pass "HTTPS endpoint checks passed"
 
+step "Checking cert download endpoint behavior"
+check_http_code "https://localhost/certs/local-ca.crt" "200"
+check_http_code "https://localhost/certs/privkey.pem" "404"
+check_http_code "https://localhost/certs/fullchain.pem" "404"
+pass "Certificate endpoint is scoped to local-ca.crt only"
+
 info "Verification complete"
