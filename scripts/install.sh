@@ -73,27 +73,32 @@ LEAF_CERT_FILE="$CERT_DIR/server.crt"
 LEAF_CSR_FILE="$CERT_DIR/server.csr"
 needs_new_cert=false
 needs_new_ca=false
+manage_local_ca=false
 
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
   needs_new_cert=true
+  manage_local_ca=true
   log "TLS cert files not found. Generating local-CA-signed cert for nginx."
 fi
 
 if [ ! -f "$CA_CERT_FILE" ] || [ ! -f "$CA_KEY_FILE" ]; then
-  needs_new_ca=true
-  needs_new_cert=true
-  log "Local CA files not found. Generating local CA and server cert for nginx."
-elif command -v openssl >/dev/null 2>&1; then
-  if ! openssl x509 -in "$CERT_FILE" -noout -ext subjectAltName 2>/dev/null | grep -Fq "DNS:$CERT_HOST"; then
+  if [ "$manage_local_ca" = "true" ]; then
+    needs_new_ca=true
     needs_new_cert=true
-    log "Existing TLS cert does not include $CERT_HOST SAN. Regenerating server cert."
+    log "Local CA files not found. Generating local CA and server cert for nginx."
   fi
-
+elif command -v openssl >/dev/null 2>&1; then
   cert_issuer="$(openssl x509 -in "$CERT_FILE" -noout -issuer 2>/dev/null | sed 's/^issuer= *//')"
   ca_subject="$(openssl x509 -in "$CA_CERT_FILE" -noout -subject 2>/dev/null | sed 's/^subject= *//')"
-  if [ -n "$cert_issuer" ] && [ -n "$ca_subject" ] && [ "$cert_issuer" != "$ca_subject" ]; then
-    needs_new_cert=true
-    log "Existing TLS cert is not signed by local CA. Regenerating server cert."
+
+  if [ -n "$cert_issuer" ] && [ -n "$ca_subject" ] && [ "$cert_issuer" = "$ca_subject" ]; then
+    manage_local_ca=true
+    if ! openssl x509 -in "$CERT_FILE" -noout -ext subjectAltName 2>/dev/null | grep -Fq "DNS:$CERT_HOST"; then
+      needs_new_cert=true
+      log "Local-CA cert does not include $CERT_HOST SAN. Regenerating server cert."
+    fi
+  else
+    log "Detected custom TLS cert/key. Preserving existing files."
   fi
 fi
 

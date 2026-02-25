@@ -75,6 +75,7 @@ The landing page is available at `https://SERVER_IP/`.
 Mediabox webapp:
 - URL: `https://SERVER_IP/`
 - Served by nginx from `$CONFIG_ROOT/nginx/html`
+- Includes a `Download CA Cert` button (`/certs/local-ca.crt`) for local trust setup
 - Update flow: edit `configs/_templates/nginx/html/index.html` and rerun
   `./scripts/install.sh` (it always copies the HTML templates)
 
@@ -164,6 +165,14 @@ On install, if these files are missing (or if the cert does not match
 For browser trust with the generated cert, import:
 
 - `$CONFIG_ROOT/nginx/certs/local-ca.crt`
+- Or download it from `https://SERVER_IP/certs/local-ca.crt`
+
+Custom cert behavior:
+
+- If `fullchain.pem`/`privkey.pem` are present and not signed by the local CA,
+  the installer preserves them.
+- Local-CA certs are regenerated only when missing or when SAN does not include
+  `mediabox.home.arpa`.
 
 For production/public trust, replace cert/key with your own and restart nginx:
 
