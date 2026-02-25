@@ -111,4 +111,7 @@ log "Starting containers"
 cd "$REPO_ROOT"
 docker compose up -d
 
+log "Restarting nginx to apply updated config/certs from bind mounts"
+docker compose restart nginx
+
 log "Done"
