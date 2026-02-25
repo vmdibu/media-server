@@ -1,9 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+RECREATE_MEDIA_CONFIG=0
+
 log() {
   printf '%s\n' "$*"
 }
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/install.sh [--recreate-media-config]
+
+Options:
+  --recreate-media-config   Force-copy nginx/conf.d/media-server.conf from templates.
+  -h, --help                Show this help.
+EOF
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --recreate-media-config)
+      RECREATE_MEDIA_CONFIG=1
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      log "ERROR: Unknown argument: $arg"
+      usage
+      exit 1
+      ;;
+  esac
+done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -43,12 +72,19 @@ mkdir -p "$MOVIES_DIR" "$TV_DIR" "$DOWNLOADS_DIR"
 
 TEMPLATE_ROOT="$REPO_ROOT/configs/_templates"
 if [ -d "$TEMPLATE_ROOT" ]; then
+  mkdir -p "$CONFIG_ROOT/nginx/conf.d"
+
   if [ -d "$CONFIG_ROOT/nginx/conf.d" ] && [ -z "$(ls -A "$CONFIG_ROOT/nginx/conf.d" 2>/dev/null)" ]; then
     log "Copying nginx template configs"
-    mkdir -p "$CONFIG_ROOT/nginx/conf.d"
     cp -a "$TEMPLATE_ROOT/nginx/conf.d/." "$CONFIG_ROOT/nginx/conf.d/"
   else
     log "Skipping nginx template copy (target not empty)"
+  fi
+
+  if [ "$RECREATE_MEDIA_CONFIG" -eq 1 ]; then
+    log "Recreating nginx media config (media-server.conf)"
+    cp -f "$TEMPLATE_ROOT/nginx/conf.d/media-server.conf" \
+      "$CONFIG_ROOT/nginx/conf.d/media-server.conf"
   fi
 
   log "Copying nginx template html"

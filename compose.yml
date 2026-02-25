@@ -131,6 +131,8 @@ services:
     image: node:20-alpine
     container_name: disk-usage
     restart: unless-stopped
+    ports:
+      - 3000:3000
     environment:
       - DISK_PATH=${MEDIA_ROOT}
       - PORT=3000

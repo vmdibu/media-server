@@ -59,6 +59,12 @@ cp .env.example .env
 docker compose ps
 ```
 
+If you need to refresh the live nginx media proxy config from the template,
+run:
+```bash
+./scripts/install.sh --recreate-media-config
+```
+
 During first setup, open each app on its direct port and set the Base URL in
 the app UI when required (Plex, Portainer, and qBittorrent do not need this).
 The table below is for the initial setup URLs (use `http://SERVER_IP:PORT`),
@@ -126,9 +132,11 @@ Example URLs (HTTP only):
 - http://SERVER_IP/jackett
 - http://SERVER_IP/plex
 
-Plex uses `/plex` via `host.docker.internal:32400` because it runs in host
-network mode. The nginx service adds an `extra_hosts` entry so the container can
-reach the Docker host gateway.
+Nginx path proxies route to published host ports via `host.docker.internal`
+to avoid stale container DNS resolution after service recreation. Plex `/plex`
+also uses `host.docker.internal:32400` because Plex runs in host network mode.
+The nginx service adds an `extra_hosts` entry so the container can reach the
+Docker host gateway.
 
 | Service     | Default port | Example URL                    | Nginx path |
 |-------------|--------------|--------------------------------|------------|
